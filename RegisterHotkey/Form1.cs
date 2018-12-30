@@ -17,35 +17,17 @@ namespace RegisterHotkey
         {
             InitializeComponent();
         }
-        #region Windows API
-        public const int WM_HOTKEY = 0x0312;
-        [DllImport("user32.dll")]
-        public static extern bool RegisterHotKey(IntPtr hwnd, int id, uint fsModifiers, uint vk);
-
-        [DllImport("user32.dll")]
-        public static extern bool UnregisterHotKey(IntPtr hwnd, int id);
-
-        [DllImport("user32.dll")]
-        public static extern IntPtr FindWindow(string className, string windowText);
-        public enum ModifierKey
-        {
-            Alt = 0x0001,
-            Control = 0x0002,
-            Shift = 0x0004,
-            Windows = 0x0008
-        }
-        #endregion
+        
         IntPtr thisWindow;
         private void Form1_Load(object sender, EventArgs e)
         {
-            thisWindow = FindWindow(null, this.Text);
+            thisWindow = HotKeyManager.FindWindow(null, this.Text);
             bool success = false;
             if(thisWindow != IntPtr.Zero)
             {
-                Console.WriteLine(thisWindow);
                 //若要注册多个修饰键，可以使用位或运算符
-                success = RegisterHotKey(thisWindow, 1, (uint)ModifierKey.Shift | (uint)ModifierKey.Control, (uint)Keys.Q);
-                Lbl_Info.Text = success ? "注册成功。" : "注册失败！";
+                success = HotKeyManager.RegisterHotKey(thisWindow, 1, (uint)HotKeyManager.ModifierKey.Shift | (uint)HotKeyManager.ModifierKey.Control, (uint)Keys.Q);
+                Lbl_Info.Text = "注册" + (success ? "成功。" : "失败！");
             }
             else
             {
@@ -55,14 +37,30 @@ namespace RegisterHotkey
 
         private void Form1_FormClosing(object sender, FormClosingEventArgs e)
         {
-            UnregisterHotKey(thisWindow, 1);
+            HotKeyManager.UnregisterHotKey(thisWindow, 1);
         }
 
         protected override void WndProc(ref Message keyPressed)
         {
-            if(keyPressed.Msg == WM_HOTKEY)
+            
+            if(keyPressed.Msg == HotKeyManager.WM_HOTKEY)
             {
                 Lbl_Info.Text = DateTime.Now.ToString("hh:mm:ss") + "，热键被按下";
+            }
+            //移动窗口
+            if(keyPressed.Msg == 0x0003)
+            {
+                
+            }
+            //获得焦点
+            if(keyPressed.Msg == 0x0007)
+            {
+                Lbl_Info.BackColor = Color.Green;
+            }
+            //失去焦点
+            if(keyPressed.Msg == 0x0008)
+            {
+                Lbl_Info.BackColor = SystemColors.Control;
             }
             base.WndProc(ref keyPressed);
         }
